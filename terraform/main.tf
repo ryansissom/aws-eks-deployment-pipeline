@@ -15,8 +15,14 @@ terraform {
 # Provider
 ########################################
 
-provider "aws" { 
-  region = var.region 
+provider "aws" {
+  region = var.region
+  default_tags {
+    tags = {
+      Terraform   = true
+      Environment = var.env
+    }
+  }
 }
 
 ########################################
@@ -24,22 +30,6 @@ provider "aws" {
 ########################################
 
 data "aws_availability_zones" "available" {}
-
-########################################
-# Locals
-########################################
-
-locals {
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  public_subnets = [
-    for i in range(length(local.azs)) : cidrsubnet("10.0.0.0/16", 8, i)
-  ]
-
-  private_subnets = [
-    for i in range(length(local.azs)) : cidrsubnet("10.0.0.0/16", 8, i + 100)
-  ]
-}
 
 ########################################
 # Modules
@@ -55,42 +45,23 @@ module "vpc" {
   private_subnets = local.private_subnets
   public_subnets  = local.public_subnets
 
-  enable_nat_gateway = false
-  enable_vpn_gateway = false
 
-  # tags = {
-  #   Terraform = "true"
-  #   Environment = "dev"
-  # }
-}
+  # Settings
+  map_public_ip_on_launch = true # Allows resources to automatically get IP
+  enable_nat_gateway      = true
+  single_nat_gateway      = true # Cheaper, but not highly available architecture
+  enable_vpn_gateway      = false
 
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
-
-  name               = "my-cluster"
-  kubernetes_version = "1.33"
-  
-  # Networking
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.public_subnets
-
-  endpoint_public_access = true
-  enable_cluster_creator_admin_permissions = true
-
-  # Managed node group
-  eks_managed_node_groups = {
-    default = {
-      instance_types = ["t2.micro"]
-      desired_size   = 2
-      min_size       = 1
-      max_size       = 3
-
-      # Optional extras
-      disk_size      = 20
-      capacity_type  = "SPOT"
-    }
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = "1" # Required to allow EKS to discover public load balancers
+    # shared?
   }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = "1" # Required to allow EKS to discover internal load balancers
+    # shared?
+  }
+
 }
 
 ########################################
@@ -98,7 +69,7 @@ module "eks" {
 ########################################
 
 resource "aws_ecr_repository" "my_app_repo" {
-  name = "my-app"
+  name                 = "my-app"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
     scan_on_push = true
