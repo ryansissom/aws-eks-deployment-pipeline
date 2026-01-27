@@ -3,6 +3,13 @@ variable "region" {
 }
 
 variable "env" {
-  default = "us-east-1"
+  default = "dev"
 }
 
+variable "eks_cluster_name" {
+  default = "my-cluster"
+}
+
+variable "eks_cluster_version" {
+  default = "1.33"
+}
