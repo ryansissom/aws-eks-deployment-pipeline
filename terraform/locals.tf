@@ -1,15 +1,10 @@
 # Put derived values here
 
 locals {
-
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  public_subnets = [
-    for i in range(length(local.azs)) : cidrsubnet("10.0.0.0/16", 8, i)
-  ]
-
-  private_subnets = [
-    for i in range(length(local.azs)) : cidrsubnet("10.0.0.0/16", 8, i + 100)
-  ]
-
+  env         = "staging"
+  region      = "us-east-2"
+  zone1       = "us-east-2a"
+  zone2       = "us-east-2b"
+  eks_name    = "demo"
+  eks_version = "1.34"
 }
