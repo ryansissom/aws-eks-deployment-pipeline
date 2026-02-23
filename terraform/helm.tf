@@ -17,19 +17,6 @@ provider "helm" {
 
 
 # Helm Releases
-resource "helm_release" "metrics_server" {
-  name = "metrics-server"
-
-  repository = "https://kubernetes-sigs.github.io/metrics-server/"
-  chart      = "metrics-server"
-  namespace  = "kube-system"
-  version    = "3.12.1"
-
-  values = [file("${path.module}/values/metrics-server.yaml")]
-
-  depends_on = [aws_eks_node_group.general]
-}
-
 
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
@@ -52,3 +39,21 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
+resource "helm_release" "argocd" {
+  name       = "argocd"
+  namespace  = "argocd"
+  create_namespace = true
+
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+
+  values = [
+    yamlencode({
+      server = {
+        service = {
+          type = "ClusterIP"
+        }
+      }
+    })
+  ]
+}
