@@ -52,8 +52,3 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
-resource "null_resource" "gateway_api_crds" {
-  provisioner "local-exec" {
-    command = "kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml"
-  }
-}
