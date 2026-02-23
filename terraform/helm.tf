@@ -29,3 +29,31 @@ resource "helm_release" "metrics_server" {
 
   depends_on = [aws_eks_node_group.general]
 }
+
+
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+
+  values = [yamlencode({
+    clusterName = aws_eks_cluster.eks.name
+    serviceAccount = {
+      create = false
+      name   = "aws-load-balancer-controller"
+    }
+    region = var.region
+    vpcId  = aws_vpc.main.id
+  })]
+  depends_on = [
+    kubernetes_service_account_v1.lbc,
+    aws_iam_role_policy_attachment.lbc_attach
+  ]
+}
+
+resource "null_resource" "gateway_api_crds" {
+  provisioner "local-exec" {
+    command = "kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/standard-install.yaml"
+  }
+}
