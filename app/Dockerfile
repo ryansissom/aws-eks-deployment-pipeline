@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install required python packages on build
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files into container
 COPY . .
