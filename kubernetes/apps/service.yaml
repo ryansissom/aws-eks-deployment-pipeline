@@ -3,10 +3,14 @@ kind: Service
 metadata:
   name: my-app-svc
   namespace: my-app-ns
+  labels:
+    app: my-app
 spec:
   selector:
     app: my-app
   ports:
-    - port: 80
-      targetPort: 8080
+  - name: http
+    port: 80
+    targetPort: 8080
   type: ClusterIP
+

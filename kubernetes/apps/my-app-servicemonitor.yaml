@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: my-app-servicemonitor
+  namespace: my-app-ns
+  labels:
+    release: kube-prometheus-stack  # Must match Prometheus serviceMonitorSelector
+spec:
+  selector:
+    matchLabels:
+      app: my-app
+  endpoints:
+  - port: http
+    path: /metrics
